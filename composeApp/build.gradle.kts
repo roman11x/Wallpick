@@ -32,7 +32,7 @@ kotlin {
             implementation(libs.materialkolor)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
-            implementation(libs.ktor.client.java)
+            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.content.negotiation)
             implementation(libs.ktor.serialization.json)
         }
