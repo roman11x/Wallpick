@@ -1,8 +1,9 @@
-name: Build
+name: Build and Release
 
 on:
   push:
-    branches: [master, main]
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -15,11 +16,12 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew packageDeb
+      - run: sudo apt-get install -y rpm
+      - run: chmod +x gradlew && ./gradlew packageRpm
       - uses: actions/upload-artifact@v4
         with:
           name: wallpick-linux
-          path: composeApp/build/compose/binaries/main/deb/*.deb
+          path: composeApp/build/compose/binaries/main/rpm/*.rpm
 
   build-windows:
     runs-on: windows-latest
@@ -35,3 +37,22 @@ jobs:
         with:
           name: wallpick-windows
           path: composeApp/build/compose/binaries/main/msi/*.msi
+
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wallpick-linux
+          path: artifacts/
+      - uses: actions/download-artifact@v4
+        with:
+          name: wallpick-windows
+          path: artifacts/
+      - run: gh release create ${{ github.ref_name }} artifacts/* --title "${{ github.ref_name }}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
