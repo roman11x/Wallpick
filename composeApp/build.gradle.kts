@@ -46,7 +46,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Rpm)
-            packageName = "com.example.wallpick"
+            packageName = "wallpick"
             packageVersion = "1.0.0"
         }
     }

@@ -7,7 +7,8 @@ The two together make for a seamless demo: wallpick changes the wallpaper while 
 > **Built entirely with [Claude Code](https://claude.ai/code)**
 
 ## Demo
-[[demo]](video/demo_video.mp4)
+<!-- Drag your .mp4 into a GitHub issue comment box, copy the generated URL, paste it below -->
+<!-- https://github.com/user-attachments/assets/YOUR-VIDEO-ID -->
 
 
 ## Features
@@ -20,7 +21,7 @@ The two together make for a seamless demo: wallpick changes the wallpaper while 
 
 **Fedora / RPM-based Linux**
 ```
-sudo dnf install ./wallpick-1.0.0-1.x86_64.rpm
+sudo dnf install ./wallpick-*.rpm
 ```
 
 **Windows 11**
