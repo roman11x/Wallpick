@@ -2,6 +2,7 @@ package com.example.wallpick.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,17 +20,19 @@ fun WaveOverlay(waveKey: Int, origin: Offset, color: Color) {
     LaunchedEffect(waveKey) {
         if (waveKey == 0) return@LaunchedEffect
         radius.snapTo(0f)
-        alpha.snapTo(0.5f)
+        alpha.snapTo(0.45f)
+        // Radius expands with a wave-like deceleration — fast at first, then settles
         launch {
             radius.animateTo(
                 targetValue = 2800f,
-                animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
+                animationSpec = tween(durationMillis = 1600, easing = FastOutSlowInEasing)
             )
         }
+        // Alpha fades linearly so the colour wash is uniform across the expansion
         launch {
             alpha.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(durationMillis = 700)
+                animationSpec = tween(durationMillis = 1800, easing = LinearEasing)
             )
         }
     }
