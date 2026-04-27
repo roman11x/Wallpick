@@ -7,8 +7,7 @@ The two together make for a seamless demo: wallpick changes the wallpaper while 
 > **Built entirely with [Claude Code](https://claude.ai/code)**
 
 ## Demo
-
-<!-- Add video here -->
+video/demo.mp4 
 
 ## Features
 
