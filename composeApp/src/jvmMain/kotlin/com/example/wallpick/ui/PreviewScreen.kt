@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.wallpick.LocalWallpickImageLoader
 import com.example.wallpick.data.Wallpaper
 import com.example.wallpick.data.WallhavenApi
 import com.example.wallpick.data.WallpaperSetter
@@ -28,6 +29,7 @@ fun PreviewScreen(
     onBack: () -> Unit,
     onColorClick: (String) -> Unit
 ) {
+    val imageLoader = LocalWallpickImageLoader.current
     var isDownloading by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -49,6 +51,7 @@ fun PreviewScreen(
             AsyncImage(
                 model = wallpaper.path,
                 contentDescription = null,
+                imageLoader = imageLoader,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -57,7 +60,6 @@ fun PreviewScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            // colour swatches
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)

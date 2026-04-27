@@ -6,12 +6,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import coil3.ImageLoader
+import coil3.compose.LocalPlatformContext
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.example.wallpick.data.Wallpaper
-import com.example.wallpick.settings.Settings
 import com.example.wallpick.settings.SettingsRepository
 import com.example.wallpick.ui.PreviewScreen
 import com.example.wallpick.ui.SearchScreen
 import com.materialkolor.DynamicMaterialTheme
+
+val LocalWallpickImageLoader = staticCompositionLocalOf<ImageLoader> {
+    error("No ImageLoader provided")
+}
 
 sealed class Screen {
     data class Search(val initialColor: String = "", val initialQuery: String = "") : Screen()
@@ -20,34 +26,43 @@ sealed class Screen {
 
 @Composable
 fun App() {
+    val context = LocalPlatformContext.current
+    val imageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components { add(KtorNetworkFetcherFactory()) }
+            .build()
+    }
+
     val settings = remember { SettingsRepository.load() }
     var seedColor by remember { mutableStateOf(Color(0xFF6650A4)) }
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Search()) }
 
-    DynamicMaterialTheme(seedColor = seedColor, animate = true) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            when (val screen = currentScreen) {
-                is Screen.Search -> SearchScreen(
-                    initialQuery = screen.initialQuery,
-                    initialColor = screen.initialColor,
-                    settings = settings,
-                    onWallpaperHover = { wallpaper ->
-                        wallpaper.colors.firstOrNull()?.toComposeColor()?.let { seedColor = it }
-                    },
-                    onWallpaperClick = { wallpaper ->
-                        currentScreen = Screen.Preview(wallpaper)
-                    }
-                )
-                is Screen.Preview -> PreviewScreen(
-                    wallpaper = screen.wallpaper,
-                    onBack = { currentScreen = Screen.Search() },
-                    onColorClick = { hex ->
-                        currentScreen = Screen.Search(initialColor = hex)
-                    }
-                )
+    CompositionLocalProvider(LocalWallpickImageLoader provides imageLoader) {
+        DynamicMaterialTheme(seedColor = seedColor, animate = true) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                when (val screen = currentScreen) {
+                    is Screen.Search -> SearchScreen(
+                        initialQuery = screen.initialQuery,
+                        initialColor = screen.initialColor,
+                        settings = settings,
+                        onWallpaperHover = { wallpaper ->
+                            wallpaper.colors.firstOrNull()?.toComposeColor()?.let { seedColor = it }
+                        },
+                        onWallpaperClick = { wallpaper ->
+                            currentScreen = Screen.Preview(wallpaper)
+                        }
+                    )
+                    is Screen.Preview -> PreviewScreen(
+                        wallpaper = screen.wallpaper,
+                        onBack = { currentScreen = Screen.Search() },
+                        onColorClick = { hex ->
+                            currentScreen = Screen.Search(initialColor = hex)
+                        }
+                    )
+                }
             }
         }
     }

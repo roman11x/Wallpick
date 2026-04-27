@@ -14,6 +14,7 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.example.wallpick.LocalWallpickImageLoader
 import com.example.wallpick.data.Wallpaper
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -23,6 +24,8 @@ fun WallpaperCard(
     onHover: (Wallpaper) -> Unit,
     onClick: (Wallpaper) -> Unit
 ) {
+    val imageLoader = LocalWallpickImageLoader.current
+
     Card(
         modifier = Modifier
             .aspectRatio(16f / 9f)
@@ -34,6 +37,7 @@ fun WallpaperCard(
         AsyncImage(
             model = wallpaper.thumbs.small,
             contentDescription = null,
+            imageLoader = imageLoader,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
