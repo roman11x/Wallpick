@@ -6,12 +6,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import coil3.ImageLoader
 import coil3.compose.LocalPlatformContext
 import coil3.network.ktor3.KtorNetworkFetcherFactory
-import com.example.wallpick.components.WaveOverlay
 import com.example.wallpick.data.Wallpaper
 import com.example.wallpick.settings.SettingsRepository
 import com.example.wallpick.ui.PreviewScreen
@@ -33,9 +31,6 @@ fun App() {
 
     val settings = remember { SettingsRepository.load() }
     var seedColor by remember { mutableStateOf(Color(0xFF6650A4)) }
-    var waveKey by remember { mutableIntStateOf(0) }
-    var waveOrigin by remember { mutableStateOf(Offset.Zero) }
-    var waveColor by remember { mutableStateOf(Color(0xFF6650A4)) }
     // null = showing SearchScreen; non-null = showing PreviewScreen on top
     var previewWallpaper by remember { mutableStateOf<Wallpaper?>(null) }
     var pendingColorSearch by remember { mutableStateOf("") }
@@ -52,12 +47,9 @@ fun App() {
                         settings = settings,
                         pendingColorSearch = pendingColorSearch,
                         onColorSearchConsumed = { pendingColorSearch = "" },
-                        onWallpaperHover = { wallpaper, offset ->
+                        onWallpaperHover = { wallpaper, _ ->
                             wallpaper.colors.firstOrNull()?.toComposeColor()?.let { newColor ->
                                 seedColor = newColor
-                                waveColor = newColor
-                                waveOrigin = offset
-                                waveKey++
                             }
                         },
                         onWallpaperClick = { wallpaper ->
@@ -82,8 +74,7 @@ fun App() {
                         }
                     }
 
-                    // Wave ripple on top of everything — transparent to pointer events
-                    WaveOverlay(waveKey = waveKey, origin = waveOrigin, color = waveColor)
+
                 }
             }
         }
