@@ -7,8 +7,7 @@ The two together make for a seamless demo: wallpick changes the wallpaper while 
 > **Built entirely with [Claude Code](https://claude.ai/code)**
 
 ## Demo
-<!-- Drag your .mp4 into a GitHub issue comment box, copy the generated URL, paste it below -->
-<!-- https://github.com/user-attachments/assets/YOUR-VIDEO-ID -->
+<video src="https://github.com/user-attachments/assets/2ca5faa3-7f75-4826-aa41-8ea961a8fe28" controls width="100%"></video>
 
 
 ## Features
