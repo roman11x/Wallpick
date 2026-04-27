@@ -45,7 +45,7 @@ compose.desktop {
         mainClass = "com.example.wallpick.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Msi, TargetFormat.Rpm)
             packageName = "com.example.wallpick"
             packageVersion = "1.0.0"
         }
