@@ -21,14 +21,18 @@ object WallhavenApi {
     suspend fun search(
         query: String = "",
         atleast: String = "",
+        resolutions: String = "",
         colors: String = "",
+        categories: String = "111",
         page: Int = 1,
         apiKey: String = ""
     ): WallhavenResponse {
         return client.get("$BASE_URL/search") {
             if (query.isNotBlank()) parameter("q", query)
             if (atleast.isNotBlank()) parameter("atleast", atleast)
+            if (resolutions.isNotBlank()) parameter("resolutions", resolutions)
             if (colors.isNotBlank()) parameter("colors", colors)
+            if (categories != "111") parameter("categories", categories)
             if (page > 1) parameter("page", page)
             if (apiKey.isNotBlank()) parameter("apikey", apiKey)
         }.body()

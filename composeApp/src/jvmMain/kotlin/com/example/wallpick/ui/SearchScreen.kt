@@ -10,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import com.example.wallpick.components.FilterBar
+import com.example.wallpick.components.FilterState
 import com.example.wallpick.components.WallpaperCard
 import com.example.wallpick.data.Wallpaper
 import com.example.wallpick.data.WallhavenApi
@@ -20,10 +22,10 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SearchScreen(
-    initialQuery: String = "",
-    initialColor: String = "",
     settings: Settings,
-    onWallpaperHover: (Wallpaper) -> Unit,
+    pendingColorSearch: String,
+    onColorSearchConsumed: () -> Unit,
+    onWallpaperHover: (Wallpaper, Offset) -> Unit,
     onWallpaperClick: (Wallpaper) -> Unit
 ) {
     val defaultResolution = remember {
@@ -36,9 +38,8 @@ fun SearchScreen(
         }
     }
 
-    var query by remember { mutableStateOf(initialQuery) }
-    var resolution by remember { mutableStateOf(defaultResolution) }
-    var colorFilter by remember { mutableStateOf(initialColor) }
+    var query by remember { mutableStateOf("") }
+    var filters by remember { mutableStateOf(FilterState(resolution = defaultResolution)) }
     var wallpapers by remember { mutableStateOf<List<Wallpaper>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -47,19 +48,18 @@ fun SearchScreen(
 
     val scope = rememberCoroutineScope()
 
-    fun doSearch(reset: Boolean = true) {
+    fun doSearch(reset: Boolean = true, overrideFilters: FilterState = filters) {
         scope.launch {
-            if (reset) {
-                page = 1
-                wallpapers = emptyList()
-            }
+            if (reset) { page = 1; wallpapers = emptyList() }
             isLoading = true
             error = null
             runCatching {
                 WallhavenApi.search(
                     query = query,
-                    atleast = resolution,
-                    colors = colorFilter.trimStart('#'),
+                    atleast = if (!overrideFilters.useExactResolution) overrideFilters.resolution else "",
+                    resolutions = if (overrideFilters.useExactResolution) overrideFilters.resolution else "",
+                    colors = overrideFilters.colorFilter.trimStart('#'),
+                    categories = overrideFilters.categoriesString,
                     page = page,
                     apiKey = settings.apiKey
                 )
@@ -73,13 +73,17 @@ fun SearchScreen(
         }
     }
 
-    // auto-search if arriving from a colour swatch tap
-    LaunchedEffect(initialColor) {
-        if (initialColor.isNotBlank()) doSearch()
+    // Triggered when user taps a colour swatch on the preview screen
+    LaunchedEffect(pendingColorSearch) {
+        if (pendingColorSearch.isNotBlank()) {
+            val updated = filters.copy(colorFilter = pendingColorSearch)
+            filters = updated
+            doSearch(overrideFilters = updated)
+            onColorSearchConsumed()
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // search bar
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -93,20 +97,12 @@ fun SearchScreen(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.weight(1f)
             )
-            Button(
-                onClick = { doSearch() },
-                enabled = !isLoading
-            ) {
+            Button(onClick = { doSearch() }, enabled = !isLoading) {
                 Text("Search")
             }
         }
 
-        FilterBar(
-            resolution = resolution,
-            onResolutionChange = { resolution = it },
-            colorFilter = colorFilter,
-            onColorFilterChange = { colorFilter = it }
-        )
+        FilterBar(state = filters, onStateChange = { filters = it })
 
         error?.let {
             Text(
@@ -116,20 +112,24 @@ fun SearchScreen(
             )
         }
 
-        if (isLoading && wallpapers.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (wallpapers.isEmpty() && !isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        when {
+            isLoading && wallpapers.isEmpty() -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { CircularProgressIndicator() }
+
+            wallpapers.isEmpty() -> Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text(
                     text = "Search for wallpapers above",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        } else {
-            LazyVerticalGrid(
+
+            else -> LazyVerticalGrid(
                 columns = GridCells.Adaptive(220.dp),
                 contentPadding = PaddingValues(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -143,22 +143,15 @@ fun SearchScreen(
                         onClick = onWallpaperClick
                     )
                 }
-
                 if (hasMore) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Box(
                             modifier = Modifier.fillMaxWidth().padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isLoading) {
-                                CircularProgressIndicator()
-                            } else {
-                                Button(onClick = {
-                                    page++
-                                    doSearch(reset = false)
-                                }) {
-                                    Text("Load more")
-                                }
+                            if (isLoading) CircularProgressIndicator()
+                            else Button(onClick = { page++; doSearch(reset = false) }) {
+                                Text("Load more")
                             }
                         }
                     }

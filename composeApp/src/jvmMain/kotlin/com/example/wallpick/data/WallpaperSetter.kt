@@ -16,34 +16,32 @@ object WallpaperSetter {
         val uri = "file://$path"
         ProcessBuilder("gsettings", "set", "org.gnome.desktop.background", "picture-uri", uri)
             .start().waitFor()
-        // cover both light and dark mode
         ProcessBuilder("gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", uri)
             .start().waitFor()
     }
 
     private fun setWindows(path: String) {
+        // Escape single quotes for PowerShell single-quoted string
         val escaped = path.replace("'", "''")
-        val ps = """
-Add-Type @"
-using System.Runtime.InteropServices;
-public class WP {
-  [DllImport("user32.dll", CharSet=CharSet.Auto)]
-  public static extern int SystemParametersInfo(int a, int b, string c, int d);
-}
-"@
-[WP]::SystemParametersInfo(0x0014, 0, '$escaped', 0x03)
+        // Write a .ps1 file to avoid -Command quoting issues with Add-Type here-strings
+        val script = """
+Add-Type -Name WallpickWP -Namespace WallpickNS -ErrorAction SilentlyContinue -MemberDefinition '[DllImport("user32.dll",CharSet=CharSet.Auto)]public static extern int SystemParametersInfo(int a,int b,string c,int d);'
+[WallpickNS.WallpickWP]::SystemParametersInfo(20, 0, '$escaped', 3)
         """.trimIndent()
-        ProcessBuilder("powershell", "-command", ps).start().waitFor()
+        val temp = File(System.getProperty("java.io.tmpdir"), "wallpick_set.ps1")
+        temp.writeText(script, Charsets.UTF_8)
+        ProcessBuilder(
+            "powershell", "-NoProfile", "-NonInteractive",
+            "-ExecutionPolicy", "Bypass",
+            "-File", temp.absolutePath
+        ).start().waitFor()
+        temp.delete()
     }
 
     fun saveDir(): File {
         val os = System.getProperty("os.name").lowercase()
         val home = System.getProperty("user.home")
-        val dir = if ("windows" in os) {
-            File(home, "Pictures/wallpick")
-        } else {
-            File(home, ".local/share/wallpick")
-        }
+        val dir = if ("windows" in os) File(home, "Pictures/wallpick") else File(home, ".local/share/wallpick")
         dir.mkdirs()
         return dir
     }
